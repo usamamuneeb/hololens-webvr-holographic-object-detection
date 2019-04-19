@@ -292,6 +292,13 @@ function renderSceneView (projection, view, pose, stats, t) {
 	if (!orientation) { orientation = [0, 0, 0, 1]; }
 	if (!position) { position = [0, 0, 0]; }
 
+	if ((new Date()).getSeconds() % 5 == 0 && (new Date()).getMilliseconds() <= 50) {
+		socket.emit('to_server', "orientation")
+		socket.emit('to_server', orientation.toString())
+		socket.emit('to_server', "position")
+		socket.emit('to_server', position.toString())
+	}
+
 	cubeSea.render(projection, view, stats, t, position, orientation);
 
 	// // For fun, draw a blue cube where the players head would have been if
