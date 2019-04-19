@@ -2,6 +2,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit,send
 from flask import request
 import sys
+from base64 import b64decode
 
 
 # SERVE STATIC PAGE
@@ -37,6 +38,29 @@ def handle_message(json):
     sys.stdout.flush()
     emit("to_client", json)
     return json
+
+
+
+# HANDLE PICTURE DATA SENT TO SERVER
+@socketio.on('pic_to_server')
+def handle_message(json):
+    print('=> Received Data: ' + str(json))
+
+
+
+    data_uri = str(json)
+    header, encoded = data_uri.split(",", 1)
+    data = b64decode(encoded)
+
+    with open("image.jpg", "wb") as f:
+        f.write(data)
+
+
+    print('=> Echo\'ed Back: <DATA_URI>')
+    sys.stdout.flush()
+    emit("to_client", json)
+    return json
+
 
 # CREATE AN INSTANCE AND FIRE IT UP
 if __name__ == '__main__':

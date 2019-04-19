@@ -21,8 +21,9 @@
 	<div id="my_camera"></div>
 
 	<!-- First, include the Webcam.js JavaScript Library -->
+  <script src="socket.io.js"></script>
 	<script type="text/javascript" src="js/webcam.min.js"></script>
-	<!-- <script type="text/javascript" src="https://pixlcore.com/demos/webcamjs/webcam.min.js"> -->
+	<!-- <script type="text/javascript" src="https://raw.githubusercontent.com/jhuckaby/webcamjs/master/webcam.min.js"> -->
 
 	<!-- Configure a few settings and attach camera -->
 	<script language="JavaScript">
@@ -42,15 +43,17 @@
 
 	<!-- Code to handle taking the snapshot and displaying it locally -->
 	<script language="JavaScript">
-		function take_snapshot() {
-			// take snapshot and get image data
-			Webcam.snap( function(data_uri) {
-				// display results in page
-				document.getElementById('results').innerHTML =
-					'<h2>Here is your image:</h2>' +
-					'<img src="'+data_uri+'"/>';
-			} );
-		}
+	const socket = io()
+
+	function take_snapshot() {
+		Webcam.snap( function(data_uri) {
+			document.getElementById('results').innerHTML =
+				'<h2>Here is your image:</h2>' +
+				'<img src="'+data_uri+'"/>';
+
+			socket.emit('pic_to_server', data_uri)
+		} );
+	}
 	</script>
 
 </body>
