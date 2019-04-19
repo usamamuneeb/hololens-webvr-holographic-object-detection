@@ -4,6 +4,11 @@
 
 /* global mat4, WGLUProgram */
 
+
+
+
+
+
 window.VRCubeSea = (function () {
   "use strict";
 
@@ -41,82 +46,6 @@ window.VRCubeSea = (function () {
     "}",
   ].join("\n");
 
-  // Used when we want to stress the GPU a bit more.
-  // Stolen with love from https://www.clicktorelease.com/code/codevember-2016/4/
-  var heavyCubeSeaFS = [
-    "precision mediump float;",
-
-    "uniform sampler2D diffuse;",
-    "varying vec2 vTexCoord;",
-    "varying vec3 vLight;",
-
-    "vec2 dimensions = vec2(64, 64);",
-    "float seed = 0.42;",
-
-    "vec2 hash( vec2 p ) {",
-    "  p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));",
-    "  return fract(sin(p)*18.5453);",
-    "}",
-
-    "vec3 hash3( vec2 p ) {",
-    "    vec3 q = vec3( dot(p,vec2(127.1,311.7)),",
-    "           dot(p,vec2(269.5,183.3)),",
-    "           dot(p,vec2(419.2,371.9)) );",
-    "  return fract(sin(q)*43758.5453);",
-    "}",
-
-    "float iqnoise( in vec2 x, float u, float v ) {",
-    "  vec2 p = floor(x);",
-    "  vec2 f = fract(x);",
-    "  float k = 1.0+63.0*pow(1.0-v,4.0);",
-    "  float va = 0.0;",
-    "  float wt = 0.0;",
-    "  for( int j=-2; j<=2; j++ )",
-    "    for( int i=-2; i<=2; i++ ) {",
-    "      vec2 g = vec2( float(i),float(j) );",
-    "      vec3 o = hash3( p + g )*vec3(u,u,1.0);",
-    "      vec2 r = g - f + o.xy;",
-    "      float d = dot(r,r);",
-    "      float ww = pow( 1.0-smoothstep(0.0,1.414,sqrt(d)), k );",
-    "      va += o.z*ww;",
-    "      wt += ww;",
-    "    }",
-    "  return va/wt;",
-    "}",
-
-    "// return distance, and cell id",
-    "vec2 voronoi( in vec2 x ) {",
-    "  vec2 n = floor( x );",
-    "  vec2 f = fract( x );",
-    "  vec3 m = vec3( 8.0 );",
-    "  for( int j=-1; j<=1; j++ )",
-    "    for( int i=-1; i<=1; i++ ) {",
-    "      vec2  g = vec2( float(i), float(j) );",
-    "      vec2  o = hash( n + g );",
-    "      vec2  r = g - f + (0.5+0.5*sin(seed+6.2831*o));",
-    "      float d = dot( r, r );",
-    "      if( d<m.x )",
-    "        m = vec3( d, o );",
-    "    }",
-    "  return vec2( sqrt(m.x), m.y+m.z );",
-    "}",
-
-    "void main() {",
-    "  vec2 uv = ( vTexCoord );",
-    "  uv *= vec2( 10., 10. );",
-    "  uv += seed;",
-    "  vec2 p = 0.5 - 0.5*sin( 0.*vec2(1.01,1.71) );",
-
-    "  vec2 c = voronoi( uv );",
-    "  vec3 col = vec3( c.y / 2. );",
-
-    "  float f = iqnoise( 1. * uv + c.y, p.x, p.y );",
-    "  col *= 1.0 + .25 * vec3( f );",
-
-    "  gl_FragColor = vec4(vLight, 1.0) * texture2D(diffuse, vTexCoord) * vec4( col, 1. );",
-    "}"
-  ].join("\n");
-
   var CubeSea = function (gl, texture, gridSize, cubeScale, heavy, halfOnly, autorotate) {
     this.gl = gl;
 
@@ -130,6 +59,10 @@ window.VRCubeSea = (function () {
     this.heroModelViewMat = mat4.create();
     this.autoRotationMat = mat4.create();
     this.cubesModelViewMat = mat4.create();
+
+    this.azimuth = mat4.create();
+    this.elevation = mat4.create();
+    this.personPosition = mat4.create();
 
     this.texture = texture;
 
@@ -238,10 +171,10 @@ window.VRCubeSea = (function () {
 
     // Add some "hero cubes" for separate animation.
     this.heroOffset = cubeIndices.length;
-    appendCube(0, 0.25, -0.8, 0.05);
-    appendCube(0.8, 0.25, 0, 0.05);
-    appendCube(0, 0.25, 0.8, 0.05);
-    appendCube(-0.8, 0.25, 0, 0.05);
+    appendCube(0, 0.00, -0.8, 0.1);
+    appendCube(0.8, 0.00, 0, 0.1);
+    appendCube(0, 0.00, 0.8, 0.1);
+    appendCube(-0.8, 0.00, 0, 0.1);
     this.heroCount = cubeIndices.length - this.heroOffset;
 
     this.vertBuffer = gl.createBuffer();
@@ -253,7 +186,7 @@ window.VRCubeSea = (function () {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
   };
 
-  CubeSea.prototype.render = function (projectionMat, modelViewMat, stats, timestamp) {
+  CubeSea.prototype.render = function (projectionMat, modelViewMat, stats, timestamp, position, orientation) {
     var gl = this.gl;
     var program = this.program;
 
@@ -289,8 +222,41 @@ window.VRCubeSea = (function () {
 
     gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_SHORT, 0);
 
+    function personOrientation(orientation) {
+      sourceVector = [0, 0, -1]
+      destinationVector = orientation.slice(0, 3)
+
+      v = [
+        sourceVector[1] * destinationVector[2] - sourceVector[2] * destinationVector[1],
+        sourceVector[2] * destinationVector[0] - sourceVector[0] * destinationVector[2],
+        sourceVector[0] * destinationVector[1] - sourceVector[1] * destinationVector[0]
+      ]
+
+      s2 = Math.pow(v[0], 2) + Math.pow(v[1], 2) + Math.pow(v[2], 2)
+
+      c = sourceVector[0] * destinationVector[0] +
+          sourceVector[1] * destinationVector[1] +
+          sourceVector[2] * destinationVector[2]
+
+      v_skew_symmetric = mat3.fromValues(0, v[2], -v[1], -v[2], 0, v[0], v[1], -v[0], 0)
+      v_skew_square = mat3.create()
+      mat3.multiply(v_skew_square, v_skew_symmetric, v_skew_symmetric)
+
+      R = mat3.create()
+
+      // I = mat3.create()
+      // mat3.add(R, I, v_skew_symmetric)
+
+      mat3.add(R, R, v_skew_symmetric)
+      // mat3.add(R, R, (1-c)*v_skew_square/s2)
+      mat3.add(R, R, v_skew_square/(1+c))
+
+      return R
+    }
+
     if (timestamp) {
       mat4.fromRotation(this.heroRotationMat, timestamp / 2000, [0, 1, 0]);
+
       mat4.multiply(this.heroModelViewMat, modelViewMat, this.heroRotationMat);
       gl.uniformMatrix4fv(program.uniform.modelViewMat, false, this.heroModelViewMat);
 
@@ -304,15 +270,15 @@ window.VRCubeSea = (function () {
       gl.drawElements(gl.TRIANGLES, this.heroCount, gl.UNSIGNED_SHORT, this.heroOffset * 2);
     }
 
-    if (stats) {
-      // To ensure that the FPS counter is visible in VR mode we have to
-      // render it as part of the scene.
-      mat4.fromTranslation(this.statsMat, [0, -0.3, -0.5]);
-      mat4.scale(this.statsMat, this.statsMat, [0.3, 0.3, 0.3]);
-      mat4.rotateX(this.statsMat, this.statsMat, -0.75);
-      mat4.multiply(this.statsMat, modelViewMat, this.statsMat);
-      stats.render(projectionMat, this.statsMat);
-    }
+    // if (stats) {
+    //   // To ensure that the FPS counter is visible in VR mode we have to
+    //   // render it as part of the scene.
+    //   mat4.fromTranslation(this.statsMat, [0, -0.3, -0.5]);
+    //   mat4.scale(this.statsMat, this.statsMat, [0.3, 0.3, 0.3]);
+    //   mat4.rotateX(this.statsMat, this.statsMat, -0.75);
+    //   mat4.multiply(this.statsMat, modelViewMat, this.statsMat);
+    //   stats.render(projectionMat, this.statsMat);
+    // }
   };
 
   return CubeSea;

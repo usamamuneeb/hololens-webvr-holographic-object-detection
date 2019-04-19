@@ -2,6 +2,8 @@
 (function () {
 "use strict";
 
+var PLAYER_HEIGHT = 0 /* 1.65*/
+
 var vrDisplay = null;
 var frameData = null;
 var projectionMat = mat4.create();
@@ -19,11 +21,13 @@ var gl = null;
 var cubeSea = null;
 var stats = null;
 
+
 function onContextLost( event ) {
 	event.preventDefault();
 	console.log( 'WebGL Context Lost.' );
 	gl = null;
 	cubeSea = null;
+
 	stats = null;
 }
 
@@ -36,13 +40,13 @@ var webglCanvas = document.getElementById("webgl-canvas");
 webglCanvas.addEventListener( 'webglcontextlost', onContextLost, false );
 webglCanvas.addEventListener( 'webglcontextrestored', onContextRestored, false );
 
-function initWebGL() {
+function initWebGL (preserveDrawingBuffer) {
 	var glAttribs = {
 		alpha: false,
+		preserveDrawingBuffer: preserveDrawingBuffer
 	};
 	var useWebgl2 = WGLUUrl.getBool('webgl2', false);
 	var contextTypes = useWebgl2 ? ["webgl2"] : ["webgl", "experimental-webgl"];
-
 	for (var i in contextTypes) {
 		gl = webglCanvas.getContext(contextTypes[i], glAttribs);
 		if (gl)
@@ -59,18 +63,22 @@ function initWebGL() {
 
 	var textureLoader = new WGLUTextureLoader(gl);
 	var texture = textureLoader.loadTexture("media/textures/cube-sea.png");
+
+	// If the VRDisplay doesn't have stageParameters we won't know
+	// how big the users play space. Construct a scene around a
+	// default space size like 2 meters by 2 meters as a placeholder.
 	cubeSea = new VRCubeSea(gl, texture);
 
 	var enablePerformanceMonitoring = WGLUUrl.getBool(
 			'enablePerformanceMonitoring', false);
 	stats = new WGLUStats(gl, enablePerformanceMonitoring);
+	// debugGeom = new WGLUDebugGeometry(gl);
 
 	// Wait until we have a WebGL context to resize and start rendering.
 	window.addEventListener("resize", onResize, false);
 	onResize();
+	window.requestAnimationFrame(onAnimationFrame);
 }
-initWebGL();
-
 
 // ================================
 // WebVR-specific code begins here.
@@ -142,16 +150,29 @@ if (navigator.getVRDisplays) {
 	navigator.getVRDisplays().then(function (displays) {
 		if (displays.length > 0) {
 			vrDisplay = displays[displays.length - 1];
-
-			// It's heighly reccommended that you set the near and far planes to
-			// something appropriate for your scene so the projection matricies
-			// WebVR produces have a well scaled depth buffer.
 			vrDisplay.depthNear = 0.1;
 			vrDisplay.depthFar = 1024.0;
 
-			// Generally, you want to wait until VR support is confirmed and
-			// you know the user has a VRDisplay capable of presenting connected
-			// before adding UI that advertises VR features.
+			initWebGL(vrDisplay.capabilities.hasExternalDisplay);
+
+			if (vrDisplay.stageParameters &&
+					vrDisplay.stageParameters.sizeX > 0 &&
+					vrDisplay.stageParameters.sizeZ > 0) {
+				// If we have stageParameters with a valid size use that to resize
+				// our scene to match the users available space more closely. The
+				// check for size > 0 is necessary because some devices, like the
+				// Oculus Rift, can give you a standing space coordinate but don't
+				// have a configured play area. These devices will return a stage
+				// size of 0.
+				// ################# cubeIsland.resize(vrDisplay.stageParameters.sizeX, vrDisplay.stageParameters.sizeZ);
+			} else {
+				if (vrDisplay.stageParameters) {
+					VRSamplesUtil.addInfo("VRDisplay reported stageParameters, but stage size was 0. Using default size.", 3000);
+				} else {
+					VRSamplesUtil.addInfo("VRDisplay did not report stageParameters", 3000);
+				}
+			}
+
 			if (vrDisplay.capabilities.canPresent)
 				vrPresentButton = VRSamplesUtil.addButton("Enter VR", "E", "media/icons/cardboard64.png", onVRRequestPresent);
 
@@ -159,28 +180,21 @@ if (navigator.getVRDisplays) {
 			if (vrDisplay.capabilities.canPresent && WGLUUrl.getBool('canvasClickPresents', false))
 				webglCanvas.addEventListener("click", onVRRequestPresent, false);
 
-			// The UA may kick us out of VR present mode for any reason, so to
-			// ensure we always know when we begin/end presenting we need to
-			// listen for vrdisplaypresentchange events.
 			window.addEventListener('vrdisplaypresentchange', onVRPresentChange, false);
-
-			// These events fire when the user agent has had some indication that
-			// it would be appropariate to enter or exit VR presentation mode, such
-			// as the user putting on a headset and triggering a proximity sensor.
-			// You can inspect the `reason` property of the event to learn why the
-			// event was fired, but in this case we're going to always trust the
-			// event and enter or exit VR presentation mode when asked.
 			window.addEventListener('vrdisplayactivate', onVRRequestPresent, false);
 			window.addEventListener('vrdisplaydeactivate', onVRExitPresent, false);
 		} else {
+			initWebGL(false);
 			VRSamplesUtil.addInfo("WebVR supported, but no VRDisplays found.", 3000);
 		}
 	}, function () {
 		VRSamplesUtil.addError("Your browser does not support WebVR. See <a href='http://webvr.info'>webvr.info</a> for assistance.");
 	});
 } else if (navigator.getVRDevices) {
+	initWebGL(false);
 	VRSamplesUtil.addError("Your browser supports WebVR but not the latest version. See <a href='http://webvr.info'>webvr.info</a> for more info.");
 } else {
+	initWebGL(false);
 	VRSamplesUtil.addError("Your browser does not support WebVR. See <a href='http://webvr.info'>webvr.info</a> for assistance.");
 }
 
@@ -247,6 +261,50 @@ webglCanvas.addEventListener("click", onClick, false);
 window.addEventListener('vrdisplaypointerrestricted', onDisplayPointerRestricted);
 window.addEventListener('vrdisplaypointerunrestricted', onDisplayPointerUnrestricted);
 
+// Get a matrix for the pose that takes into account the stageParameters
+// if we have them, and otherwise adjusts the position to ensure we're
+// not stuck in the floor.
+function getStandingViewMatrix (out, view) {
+	if (vrDisplay.stageParameters) {
+		// If the headset provides stageParameters use the
+		// sittingToStandingTransform to transform the view matrix into a
+		// space where the floor in the center of the users play space is the
+		// origin.
+		mat4.invert(out, vrDisplay.stageParameters.sittingToStandingTransform);
+		mat4.multiply(out, view, out);
+	} else {
+		// Otherwise you'll want to translate the view to compensate for the
+		// scene floor being at Y=0. Ideally this should match the user's
+		// height (you may want to make it configurable). For this demo we'll
+		// just assume all human beings are 1.65 meters (~5.4ft) tall.
+		mat4.identity(out);
+		mat4.translate(out, out, [0, PLAYER_HEIGHT, 0]);
+		mat4.invert(out, out);
+		mat4.multiply(out, view, out);
+	}
+}
+
+function renderSceneView (projection, view, pose, stats, t) {
+	// cubeSea.render(projection, view, stats, t);
+
+	var orientation = pose.orientation;
+	var position = pose.position;
+	if (!orientation) { orientation = [0, 0, 0, 1]; }
+	if (!position) { position = [0, 0, 0]; }
+
+	cubeSea.render(projection, view, stats, t, position, orientation);
+
+	// // For fun, draw a blue cube where the players head would have been if
+	// // we weren't taking the stageParameters into account. It'll start in
+	// // the center of the floor.
+	// var orientation = pose.orientation;
+	// var position = pose.position;
+	// if (!orientation) { orientation = [0, 0, 0, 1]; }
+	// if (!position) { position = [0, 0, 0]; }
+	// debugGeom.bind(projection, view);
+	// debugGeom.drawCube(orientation, position, 0.2, [0, 0, 1, 1]);
+}
+
 function onAnimationFrame (t) {
 	// do not attempt to render if there is no available WebGL context
 	if (!gl || !stats || !cubeSea) {
@@ -274,10 +332,12 @@ function onAnimationFrame (t) {
 		if (vrDisplay.isPresenting) {
 			// When presenting render a stereo view.
 			gl.viewport(0, 0, webglCanvas.width * 0.5, webglCanvas.height);
-			cubeSea.render(frameData.leftProjectionMatrix, frameData.leftViewMatrix, stats, t);
+			getStandingViewMatrix(viewMat, frameData.leftViewMatrix);
+			renderSceneView(frameData.leftProjectionMatrix, viewMat, frameData.pose, stats, t);
 
 			gl.viewport(webglCanvas.width * 0.5, 0, webglCanvas.width * 0.5, webglCanvas.height);
-			cubeSea.render(frameData.rightProjectionMatrix, frameData.rightViewMatrix, stats, t);
+			getStandingViewMatrix(viewMat, frameData.rightViewMatrix);
+			renderSceneView(frameData.rightProjectionMatrix, viewMat, frameData.pose, stats, t);
 
 			// If we're currently presenting to the VRDisplay we need to
 			// explicitly indicate we're done rendering.
