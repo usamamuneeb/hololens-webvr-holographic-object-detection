@@ -23,7 +23,7 @@ def index():
 @socketio.on('connect')
 def connect():
     requestParams = request.event['args'][0]
-    print("New Client Connected: " + requestParams['REMOTE_ADDR'] + ":" + requestParams['REMOTE_PORT'])
+    print("New Client Connected: " + str(requestParams['REMOTE_ADDR']) + ":" + str(requestParams['REMOTE_PORT']))
     sys.stdout.flush()
     emit("to_client", "Welcome!")
     return "Welcome!"
