@@ -222,40 +222,13 @@ window.VRCubeSea = (function () {
 
     gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_SHORT, 0);
 
-    function personOrientation(orientation) {
-      sourceVector = [0, 0, -1]
-      destinationVector = orientation.slice(0, 3)
-
-      v = [
-        sourceVector[1] * destinationVector[2] - sourceVector[2] * destinationVector[1],
-        sourceVector[2] * destinationVector[0] - sourceVector[0] * destinationVector[2],
-        sourceVector[0] * destinationVector[1] - sourceVector[1] * destinationVector[0]
-      ]
-
-      s2 = Math.pow(v[0], 2) + Math.pow(v[1], 2) + Math.pow(v[2], 2)
-
-      c = sourceVector[0] * destinationVector[0] +
-          sourceVector[1] * destinationVector[1] +
-          sourceVector[2] * destinationVector[2]
-
-      v_skew_symmetric = mat3.fromValues(0, v[2], -v[1], -v[2], 0, v[0], v[1], -v[0], 0)
-      v_skew_square = mat3.create()
-      mat3.multiply(v_skew_square, v_skew_symmetric, v_skew_symmetric)
-
-      R = mat3.create()
-
-      // I = mat3.create()
-      // mat3.add(R, I, v_skew_symmetric)
-
-      mat3.add(R, R, v_skew_symmetric)
-      // mat3.add(R, R, (1-c)*v_skew_square/s2)
-      mat3.add(R, R, v_skew_square/(1+c))
-
-      return R
-    }
-
     if (timestamp) {
-      mat4.fromRotation(this.heroRotationMat, timestamp / 2000, [0, 1, 0]);
+      if (position && orientation) {
+        mat4.fromRotationTranslation(this.heroRotationMat, orientation, position)
+      }
+      else {
+        mat4.fromRotation(this.heroRotationMat, timestamp / 2000, [0, 1, 0]);
+      }
 
       mat4.multiply(this.heroModelViewMat, modelViewMat, this.heroRotationMat);
       gl.uniformMatrix4fv(program.uniform.modelViewMat, false, this.heroModelViewMat);
