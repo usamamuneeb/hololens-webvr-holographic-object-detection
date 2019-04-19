@@ -40,5 +40,5 @@ def handle_message(json):
 
 # CREATE AN INSTANCE AND FIRE IT UP
 if __name__ == '__main__':
-    # socketio.run(app, port=2222)
-    app.run('0.0.0.0', 2222, debug=True)
+    socketio.run(app)
+#     app.run('0.0.0.0', 2222, debug=True)
