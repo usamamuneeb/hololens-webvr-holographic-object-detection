@@ -104,36 +104,28 @@ def load_image_into_numpy_array(image):
 
 
 """
-Detection
+Add operations to the Detection Graph
 """
 
-TEST_IMAGE_PATHS = glob('./*.jpg')
-BATCH_SIZE = len(TEST_IMAGE_PATHS)
-
-
-
-def run_inference_for_single_image(image, graph):
-  with graph.as_default():
-    with tf.Session() as sess:
-      # Get handles to input and output tensors
-      ops = tf.get_default_graph().get_operations()
-      all_tensor_names = {output.name for op in ops for output in op.outputs}
-      tensor_dict = {}
-      for key in [
-          'num_detections', 'detection_boxes',
-          'detection_scores', 'detection_classes',
-          'detection_masks'
-      ]:
+with detection_graph.as_default():
+    # Get handles to input and output tensors
+    ops = tf.get_default_graph().get_operations()
+    all_tensor_names = {output.name for op in ops for output in op.outputs}
+    tensor_dict = {}
+    for key in [
+        'num_detections', 'detection_boxes',
+        'detection_scores', 'detection_classes',
+        'detection_masks'
+    ]:
         tensor_name = key + ':0'
         if tensor_name in all_tensor_names:
-          tensor_dict[key] = tf.get_default_graph().get_tensor_by_name(
-              tensor_name
-          )
-      if 'detection_masks' in tensor_dict:
+            tensor_dict[key] = tf.get_default_graph().get_tensor_by_name(
+                tensor_name
+            )
+    if 'detection_masks' in tensor_dict:
         # The following processing is only for single image
         detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
         detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
-
 
         # Reframe is required to translate mask from box coordinates to image coordinates and fit the image size.
         real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
@@ -145,24 +137,20 @@ def run_inference_for_single_image(image, graph):
 
         # Follow the convention by adding back the batch dimension
         tensor_dict['detection_masks'] = tf.expand_dims(detection_masks_reframed, 0)
-      image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
+    image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
 
 
-      output_dict = sess.run(tensor_dict, feed_dict={image_tensor: image})
+sess = tf.Session(graph=detection_graph)
 
 
-      output_dict['num_detections'] = output_dict['num_detections'].astype(int)
-
-      output_dict['detection_classes'] = output_dict['detection_classes'].astype(np.uint8)
-
-
-  return output_dict
-
+def run_inference_for_single_image(image, graph):
+    output_dict = sess.run(tensor_dict, feed_dict={image_tensor: image})
+    output_dict['num_detections'] = output_dict['num_detections'].astype(int)
+    output_dict['detection_classes'] = output_dict['detection_classes'].astype(np.uint8)
+    return output_dict
 
 
-
-def getLabeledImagesFromImages(myImages):
-  output_dict = run_inference_for_single_image(myImages, detection_graph)
+def getLabeledImagesFromImages(myImages, output_dict):
 
   for image_idx in range(0, len(myImages)):
 
@@ -259,7 +247,9 @@ def handle_message(json):
     image_PIL = Image.open(image_bytes).convert('RGB')
     image_PIL.save('myImageArray.png')
     image_numpy = load_image_into_numpy_array(image_PIL)
-    getLabeledImagesFromImages([image_numpy])
+
+    output_dict = run_inference_for_single_image([image_numpy], detection_graph)
+    getLabeledImagesFromImages([image_numpy], output_dict)
 
 
 
