@@ -6,6 +6,8 @@ from flask_socketio import SocketIO, emit,send
 from flask import request
 import sys
 from base64 import b64decode
+import io
+import time
 
 """""""""""""""""""""""""""""""""
 Start RCNN Imports
@@ -159,32 +161,10 @@ def run_inference_for_single_image(image, graph):
 
 
 
+def getLabeledImagesFromImages(myImages):
+  output_dict = run_inference_for_single_image(myImages, detection_graph)
 
-for batch_start in range(0, len(TEST_IMAGE_PATHS), BATCH_SIZE):
-
-  images_np = []
-
-  for image_path in range(batch_start, batch_start + BATCH_SIZE):
-    print('Loading Image: ', image_path)
-    sys.stdout.flush()
-
-    image = Image.open(TEST_IMAGE_PATHS[image_path]).convert('RGB')
-    # the array based representation of the image will be used later in order to prepare the
-    # result image with boxes and labels on it.
-    image_np = load_image_into_numpy_array(image)
-
-
-    images_np.append(image_np)
-
-
-  images_np = np.array(images_np)
-
-
-  # Actual detection.
-  output_dict = run_inference_for_single_image(images_np, detection_graph)
-
-
-  for image_idx in range(0, 0 + BATCH_SIZE):
+  for image_idx in range(0, len(myImages)):
 
     detection_mask_word = output_dict.get('detection_masks')
 
@@ -201,7 +181,7 @@ for batch_start in range(0, len(TEST_IMAGE_PATHS), BATCH_SIZE):
 
 
     vis_util.visualize_boxes_and_labels_on_image_array(
-        images_np[image_idx],
+        myImages[image_idx],
         output_dict['detection_boxes'][image_idx],
         output_dict['detection_classes'][image_idx],
         output_dict['detection_scores'][image_idx],
@@ -215,11 +195,8 @@ for batch_start in range(0, len(TEST_IMAGE_PATHS), BATCH_SIZE):
 
     if not os.path.exists(os.path.join('.', 'outputs')):
         os.mkdir(os.path.join('.', 'outputs'))
-    Image.fromarray(images_np[image_idx]).save(
-        os.path.join(
-          '.', 'outputs',
-          str.split(TEST_IMAGE_PATHS[batch_start + image_idx], '\\')[-1]
-        )
+    Image.fromarray(myImages[image_idx]).save(
+        os.path.join('.', 'outputs', str(time.time()) + '.png')
     )
 
 
@@ -276,8 +253,15 @@ def handle_message(json):
     header, encoded = data_uri.split(",", 1)
     data = b64decode(encoded)
 
-    with open("image.jpg", "wb") as f:
-        f.write(data)
+    # with open("image.jpg", "wb") as f:
+    #     f.write(data)
+    image_bytes = io.BytesIO(data)
+    image_PIL = Image.open(image_bytes).convert('RGB')
+    image_PIL.save('myImageArray.png')
+    image_numpy = load_image_into_numpy_array(image_PIL)
+    getLabeledImagesFromImages([image_numpy])
+
+
 
 
     print('=> Echo\'ed Back: <DATA_URI>')
