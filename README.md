@@ -28,13 +28,44 @@ You need:
 
 Install Python 3.6.X and the following packages via `pip`:
 
-* tensorflow or tensorflow-gpu
+```bash
+pip install tensorflow-gpu # (or tensorflow; make sure to read instructions on installing tensorflow)
+```
+
+```bash
+pip install numpy flask flask_socketio Image
+```
+
+
+You will need to clone the `tensorflow/models` repository. Make sure to clone it and do not download a release version as it will not contain the `research` folder.
+
+```bash
+git clone https://github.com/tensorflow/models.git
+```
+
+You will then need to run the `protoc` compiler while in the `/path/to/models/research/` directory:
+
+```bash
+protoc object_detection/protos/*.proto --python_out=.
+```
+
+You need to add the following directories to your `PYTHONPATH`: `path\to\models\research` and `path\to\models\research\object_detection`.
 
 To fire up the server, issue the following command while inside the root of the repository:
 
 ```bash
 FLASK_APP=server.py flask run --host=0.0.0.0
 ```
+
+## To run the client
+
+The web app can be accessed at port 5000. Check by pointing your browser to: `localhost:5000`.
+
+To access it on your HoloLens or other Mixed Reality Headset that is supported by WebVR, make sure to connect both the headset and your computer running the server to the same WiFi.
+
+Find the IP address of your machine by running `ipconfig` (on Windows) or `ifconfig` (on UNIX). Then point your browser on the headset to `IP_ADDRESS:5000`. You should see a rotating image that should show that your app is running successfully.
+
+You can then enter VR mode and enjoy realtime holographic object detection.
 
 ## Tags
 
