@@ -118,8 +118,8 @@ def visualize_boxes_and_labels_on_image_array(
                                     ymin * im_height, ymax * im_height)
         else:
             (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
-            draw.line([(left, top), (left, bottom), (right, bottom),
-                (right, top), (left, top)], width=line_thickness, fill=color)
+        draw.line([(left, top), (left, bottom), (right, bottom),
+            (right, top), (left, top)], width=line_thickness, fill=color)
         try:
             font = ImageFont.truetype('arial.ttf', 24)
         except IOError:

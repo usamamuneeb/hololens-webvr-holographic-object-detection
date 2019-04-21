@@ -96,85 +96,85 @@ window.VRCubeSea = (function () {
 
       if (!size) size = 0.2;
       if (cubeScale) size *= cubeScale;
-      // Bottom
+      // // Bottom
+      // var idx = cubeVerts.length / 8.0;
+      // cubeIndices.push(idx, idx + 1, idx + 2);
+      // cubeIndices.push(idx, idx + 2, idx + 3);
+      //
+      // //             X         Y         Z         U    V    NX    NY   NZ
+      // cubeVerts.push(x - size, y - size, z - size, 0.0, 1.0, 0.0, -1.0, 0.0);
+      // cubeVerts.push(x + size, y - size, z - size, 1.0, 1.0, 0.0, -1.0, 0.0);
+      // cubeVerts.push(x + size, y - size, z + size, 1.0, 0.0, 0.0, -1.0, 0.0);
+      // cubeVerts.push(x - size, y - size, z + size, 0.0, 0.0, 0.0, -1.0, 0.0);
+      //
+      // // Top
+      // idx = cubeVerts.length / 8.0;
+      // cubeIndices.push(idx, idx + 2, idx + 1);
+      // cubeIndices.push(idx, idx + 3, idx + 2);
+      //
+      // cubeVerts.push(x - size, y + size, z - size, 0.0, 0.0, 0.0, 1.0, 0.0);
+      // cubeVerts.push(x + size, y + size, z - size, 1.0, 0.0, 0.0, 1.0, 0.0);
+      // cubeVerts.push(x + size, y + size, z + size, 1.0, 1.0, 0.0, 1.0, 0.0);
+      // cubeVerts.push(x - size, y + size, z + size, 0.0, 1.0, 0.0, 1.0, 0.0);
+      //
+      // // Left
+      // idx = cubeVerts.length / 8.0;
+      // cubeIndices.push(idx, idx + 2, idx + 1);
+      // cubeIndices.push(idx, idx + 3, idx + 2);
+      //
+      // cubeVerts.push(x - size, y - size, z - size, 0.0, 1.0, -1.0, 0.0, 0.0);
+      // cubeVerts.push(x - size, y + size, z - size, 0.0, 0.0, -1.0, 0.0, 0.0);
+      // cubeVerts.push(x - size, y + size, z + size, 1.0, 0.0, -1.0, 0.0, 0.0);
+      // cubeVerts.push(x - size, y - size, z + size, 1.0, 1.0, -1.0, 0.0, 0.0);
+      //
+      // // Right
+      // idx = cubeVerts.length / 8.0;
+      // cubeIndices.push(idx, idx + 1, idx + 2);
+      // cubeIndices.push(idx, idx + 2, idx + 3);
+      //
+      // cubeVerts.push(x + size, y - size, z - size, 1.0, 1.0, 1.0, 0.0, 0.0);
+      // cubeVerts.push(x + size, y + size, z - size, 1.0, 0.0, 1.0, 0.0, 0.0);
+      // cubeVerts.push(x + size, y + size, z + size, 0.0, 0.0, 1.0, 0.0, 0.0);
+      // cubeVerts.push(x + size, y - size, z + size, 0.0, 1.0, 1.0, 0.0, 0.0);
+      //
+      // // Back
+      // idx = cubeVerts.length / 8.0;
+      // cubeIndices.push(idx, idx + 2, idx + 1);
+      // cubeIndices.push(idx, idx + 3, idx + 2);
+      //
+      // cubeVerts.push(x - size, y - size, z - size, 1.0, 1.0, 0.0, 0.0, -1.0);
+      // cubeVerts.push(x + size, y - size, z - size, 0.0, 1.0, 0.0, 0.0, -1.0);
+      // cubeVerts.push(x + size, y + size, z - size, 0.0, 0.0, 0.0, 0.0, -1.0);
+      // cubeVerts.push(x - size, y + size, z - size, 1.0, 0.0, 0.0, 0.0, -1.0);
+
+      // Front
       var idx = cubeVerts.length / 8.0;
       cubeIndices.push(idx, idx + 1, idx + 2);
       cubeIndices.push(idx, idx + 2, idx + 3);
 
-      //             X         Y         Z         U    V    NX    NY   NZ
-      cubeVerts.push(x - size, y - size, z - size, 0.0, 1.0, 0.0, -1.0, 0.0);
-      cubeVerts.push(x + size, y - size, z - size, 1.0, 1.0, 0.0, -1.0, 0.0);
-      cubeVerts.push(x + size, y - size, z + size, 1.0, 0.0, 0.0, -1.0, 0.0);
-      cubeVerts.push(x - size, y - size, z + size, 0.0, 0.0, 0.0, -1.0, 0.0);
-
-      // Top
-      idx = cubeVerts.length / 8.0;
-      cubeIndices.push(idx, idx + 2, idx + 1);
-      cubeIndices.push(idx, idx + 3, idx + 2);
-
-      cubeVerts.push(x - size, y + size, z - size, 0.0, 0.0, 0.0, 1.0, 0.0);
-      cubeVerts.push(x + size, y + size, z - size, 1.0, 0.0, 0.0, 1.0, 0.0);
-      cubeVerts.push(x + size, y + size, z + size, 1.0, 1.0, 0.0, 1.0, 0.0);
-      cubeVerts.push(x - size, y + size, z + size, 0.0, 1.0, 0.0, 1.0, 0.0);
-
-      // Left
-      idx = cubeVerts.length / 8.0;
-      cubeIndices.push(idx, idx + 2, idx + 1);
-      cubeIndices.push(idx, idx + 3, idx + 2);
-
-      cubeVerts.push(x - size, y - size, z - size, 0.0, 1.0, -1.0, 0.0, 0.0);
-      cubeVerts.push(x - size, y + size, z - size, 0.0, 0.0, -1.0, 0.0, 0.0);
-      cubeVerts.push(x - size, y + size, z + size, 1.0, 0.0, -1.0, 0.0, 0.0);
-      cubeVerts.push(x - size, y - size, z + size, 1.0, 1.0, -1.0, 0.0, 0.0);
-
-      // Right
-      idx = cubeVerts.length / 8.0;
-      cubeIndices.push(idx, idx + 1, idx + 2);
-      cubeIndices.push(idx, idx + 2, idx + 3);
-
-      cubeVerts.push(x + size, y - size, z - size, 1.0, 1.0, 1.0, 0.0, 0.0);
-      cubeVerts.push(x + size, y + size, z - size, 1.0, 0.0, 1.0, 0.0, 0.0);
-      cubeVerts.push(x + size, y + size, z + size, 0.0, 0.0, 1.0, 0.0, 0.0);
-      cubeVerts.push(x + size, y - size, z + size, 0.0, 1.0, 1.0, 0.0, 0.0);
-
-      // Back
-      idx = cubeVerts.length / 8.0;
-      cubeIndices.push(idx, idx + 2, idx + 1);
-      cubeIndices.push(idx, idx + 3, idx + 2);
-
-      cubeVerts.push(x - size, y - size, z - size, 1.0, 1.0, 0.0, 0.0, -1.0);
-      cubeVerts.push(x + size, y - size, z - size, 0.0, 1.0, 0.0, 0.0, -1.0);
-      cubeVerts.push(x + size, y + size, z - size, 0.0, 0.0, 0.0, 0.0, -1.0);
-      cubeVerts.push(x - size, y + size, z - size, 1.0, 0.0, 0.0, 0.0, -1.0);
-
-      // Front
-      idx = cubeVerts.length / 8.0;
-      cubeIndices.push(idx, idx + 1, idx + 2);
-      cubeIndices.push(idx, idx + 2, idx + 3);
-
-      cubeVerts.push(x - size, y - size, z + size, 0.0, 1.0, 0.0, 0.0, 1.0);
-      cubeVerts.push(x + size, y - size, z + size, 1.0, 1.0, 0.0, 0.0, 1.0);
-      cubeVerts.push(x + size, y + size, z + size, 1.0, 0.0, 0.0, 0.0, 1.0);
-      cubeVerts.push(x - size, y + size, z + size, 0.0, 0.0, 0.0, 0.0, 1.0);
+      cubeVerts.push(x - 1.7778 * size, y - size, z + size, 0.0, 1.0, 0.0, 0.0, 1.0);
+      cubeVerts.push(x + 1.7778 * size, y - size, z + size, 1.0, 1.0, 0.0, 0.0, 1.0);
+      cubeVerts.push(x + 1.7778 * size, y + size, z + size, 1.0, 0.0, 0.0, 0.0, 1.0);
+      cubeVerts.push(x - 1.7778 * size, y + size, z + size, 0.0, 0.0, 0.0, 0.0, 1.0);
     }
 
-    // Build the cube sea
-    for (var x = 0; x < gridSize; ++x) {
-      for (var y = 0; y < gridSize; ++y) {
-        for (var z = 0; z < gridSize; ++z) {
-          appendCube(x - (gridSize / 2), y - (gridSize / 2), z - (gridSize / 2));
-        }
-      }
-    }
+    // // Build the cube sea
+    // for (var x = 0; x < gridSize; ++x) {
+    //   for (var y = 0; y < gridSize; ++y) {
+    //     for (var z = 0; z < gridSize; ++z) {
+    //       appendCube(x - (gridSize / 2), y - (gridSize / 2), z - (gridSize / 2));
+    //     }
+    //   }
+    // }
 
     this.indexCount = cubeIndices.length;
 
     // Add some "hero cubes" for separate animation.
     this.heroOffset = cubeIndices.length;
-    appendCube(0, 0.00, -0.8, 0.1);
-    appendCube(0.8, 0.00, 0, 0.1);
-    appendCube(0, 0.00, 0.8, 0.1);
-    appendCube(-0.8, 0.00, 0, 0.1);
+    appendCube(0, 0.00, -2.0, 0.5);
+    // appendCube(0.8, 0.00, 0, 0.1);
+    // appendCube(0, 0.00, 0.8, 0.1);
+    // appendCube(-0.8, 0.00, 0, 0.1);
     this.heroCount = cubeIndices.length - this.heroOffset;
 
     this.vertBuffer = gl.createBuffer();
