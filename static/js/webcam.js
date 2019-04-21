@@ -45,8 +45,14 @@ function startWebcam() {
   }
 }
 
-function getCurrentFrame() {
+function writeCurrentFrameToIMG() {
   ctx.drawImage(video, 0,0)
   img_dataURI = canvas.toDataURL('image/png')
   document.getElementById("my-data-uri").src = img_dataURI
+}
+
+function getCurrentFrame() {
+  ctx.drawImage(video, 0,0)
+  img_dataURI = canvas.toDataURL('image/png')
+  return img_dataURI
 }

@@ -284,6 +284,11 @@ function getStandingViewMatrix (out, view) {
 	}
 }
 
+setInterval(function(){
+	/* Send current view every 3 seconds */
+	socket.emit('pic_to_server', getCurrentFrame())
+}, 3000);
+
 function renderSceneView (projection, view, pose, stats, t) {
 	// cubeSea.render(projection, view, stats, t);
 
