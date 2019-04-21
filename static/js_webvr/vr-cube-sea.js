@@ -171,7 +171,7 @@ window.VRCubeSea = (function () {
 
     // Add some "hero cubes" for separate animation.
     this.heroOffset = cubeIndices.length;
-    appendCube(0, 0.00, -2.0, 0.5);
+    appendCube(0, 0.00, -3.0, 0.5);
     // appendCube(0.8, 0.00, 0, 0.1);
     // appendCube(0, 0.00, 0.8, 0.1);
     // appendCube(-0.8, 0.00, 0, 0.1);

@@ -290,7 +290,7 @@ function getStandingViewMatrix (out, view) {
 setInterval(function(){
 	/* Send current view every 3 seconds */
 	socket.emit('pic_to_server', getCurrentFrame())
-}, 8000);
+}, 3000);
 
 
 socket.on('pic_to_client', (data_uri) => {

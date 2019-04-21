@@ -167,7 +167,7 @@ def getLabeledImagesFromImages(myImages, output_dict):
             category_index,
             # instance_masks=detection_mask_word[image_idx],
             use_normalized_coordinates=True,
-            line_thickness=1
+            line_thickness=5
             #   skip_scores=True,
             #   skip_labels=True
         )
