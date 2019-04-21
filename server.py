@@ -5,7 +5,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit,send
 from flask import request
 import sys
-from base64 import b64decode
+from base64 import b64decode, b64encode
 import io
 import time
 
@@ -33,7 +33,8 @@ if StrictVersion(tf.__version__) < StrictVersion('1.9.0'):
   raise ImportError('Please upgrade your TensorFlow installation to v1.9.* or later!')
 
 from utils import label_map_util
-from utils import visualization_utils as vis_util
+# from utils import visualization_utils as vis_util
+from genLabeledImage import visualize_boxes_and_labels_on_image_array
 
 """""""""""""""""""""""""""""""""
 Prepare for Tensorflow
@@ -151,44 +152,35 @@ def run_inference_for_single_image(image, graph):
 
 
 def getLabeledImagesFromImages(myImages, output_dict):
-
-  for image_idx in range(0, len(myImages)):
-
-    detection_mask_word = output_dict.get('detection_masks')
-
-    max_non_person_score = 0.0
-
-
-    for i in range(0,100):
-      if (output_dict['detection_scores'][image_idx][i] == 0.0):
-        break
-
-      if (output_dict['detection_classes'][image_idx][i] != 1):
-        if (max_non_person_score < output_dict['detection_scores'][image_idx][i]):
-          max_non_person_score = output_dict['detection_scores'][image_idx][i]
-
-
-    vis_util.visualize_boxes_and_labels_on_image_array(
-        myImages[image_idx],
-        output_dict['detection_boxes'][image_idx],
-        output_dict['detection_classes'][image_idx],
-        output_dict['detection_scores'][image_idx],
-        category_index,
-        # instance_masks=detection_mask_word[image_idx],
-        use_normalized_coordinates=True,
-        line_thickness=1
-      #   skip_scores=True,
-      #   skip_labels=True
-        )
-
     if not os.path.exists(os.path.join('.', 'outputs')):
         os.mkdir(os.path.join('.', 'outputs'))
-    Image.fromarray(myImages[image_idx]).save(
-        os.path.join('.', 'outputs', str(time.time()) + '.png')
-    )
 
+    labeled_image = None
 
+    for image_idx in range(0, len(myImages)):
+        labeled_image = visualize_boxes_and_labels_on_image_array(
+            myImages[image_idx].shape[0],
+            myImages[image_idx].shape[1],
+            output_dict['detection_boxes'][image_idx],
+            output_dict['detection_classes'][image_idx],
+            output_dict['detection_scores'][image_idx],
+            category_index,
+            # instance_masks=detection_mask_word[image_idx],
+            use_normalized_coordinates=True,
+            line_thickness=1
+            #   skip_scores=True,
+            #   skip_labels=True
+        )
+        labeled_image.save(
+            os.path.join('.', 'outputs', str(time.time()) + '.png')
+        )
 
+        break # no more images in array anyways
+
+    # RETURN DATA URI OF THIS LABELED IMAGE
+    buffered = io.BytesIO()
+    labeled_image.save(buffered, format="PNG")
+    return b64encode(buffered.getvalue())
 
 
 """""""""""""""""""""""""""""""""
@@ -233,7 +225,8 @@ def handle_message(json):
 # HANDLE PICTURE DATA SENT TO SERVER
 @socketio.on('pic_to_server')
 def handle_message(json):
-    print('=> Received Data: ' + str(json))
+    # print('=> Received Data: ' + str(json))
+    print('=> Received Data: <IMAGE_BASE64_DATA_URI>')
 
 
 
@@ -249,15 +242,14 @@ def handle_message(json):
     image_numpy = load_image_into_numpy_array(image_PIL)
 
     output_dict = run_inference_for_single_image([image_numpy], detection_graph)
-    getLabeledImagesFromImages([image_numpy], output_dict)
+    labeled_image = getLabeledImagesFromImages([image_numpy], output_dict)
 
 
 
-
-    print('=> Echo\'ed Back: <DATA_URI>')
+    print('=> Echo\'ed Back: <LABEL_BASE64_DATA_URI>')
     sys.stdout.flush()
-    emit("to_client", json)
-    return json
+    emit("pic_to_client", labeled_image)
+    return labeled_image
 
 
 # CREATE AN INSTANCE AND FIRE IT UP
