@@ -179,8 +179,9 @@ def getLabeledImagesFromImages(myImages, output_dict):
 
     # RETURN DATA URI OF THIS LABELED IMAGE
     buffered = io.BytesIO()
-    labeled_image.save(buffered, format="PNG")
-    return b64encode(buffered.getvalue())
+    labeled_image.resize((2048,1024)).save(buffered, format="PNG")
+    encoded_image = b64encode(buffered.getvalue()).decode()
+    return 'data:image/png;base64,{}'.format(encoded_image)
 
 
 """""""""""""""""""""""""""""""""
@@ -243,7 +244,6 @@ def handle_message(json):
 
     output_dict = run_inference_for_single_image([image_numpy], detection_graph)
     labeled_image = getLabeledImagesFromImages([image_numpy], output_dict)
-
 
 
     print('=> Echo\'ed Back: <LABEL_BASE64_DATA_URI>')

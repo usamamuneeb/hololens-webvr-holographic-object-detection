@@ -12,6 +12,9 @@ var viewMat = mat4.create();
 var vrPresentButton = null;
 var presentingMessage = document.getElementById("presenting-message");
 
+var textureLoader
+var texture
+
 // ===================================================
 // WebGL scene setup. This code is not WebVR specific.
 // ===================================================
@@ -61,8 +64,8 @@ function initWebGL (preserveDrawingBuffer) {
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.CULL_FACE);
 
-	var textureLoader = new WGLUTextureLoader(gl);
-	var texture = textureLoader.loadTexture("media/textures/cube-sea.png");
+	textureLoader = new WGLUTextureLoader(gl);
+	texture = textureLoader.loadTexture("media/textures/cube-sea.png");
 
 	// If the VRDisplay doesn't have stageParameters we won't know
 	// how big the users play space. Construct a scene around a
@@ -287,7 +290,15 @@ function getStandingViewMatrix (out, view) {
 setInterval(function(){
 	/* Send current view every 3 seconds */
 	socket.emit('pic_to_server', getCurrentFrame())
-}, 20000);
+}, 8000);
+
+
+socket.on('pic_to_client', (data_uri) => {
+  console.log(typeof(data_uri))
+	texture = textureLoader.loadTexture(data_uri)
+	cubeSea.updateTexture(texture)
+})
+
 
 function renderSceneView (projection, view, pose, stats, t) {
 	// cubeSea.render(projection, view, stats, t);

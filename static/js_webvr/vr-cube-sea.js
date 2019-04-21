@@ -186,6 +186,10 @@ window.VRCubeSea = (function () {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
   };
 
+  CubeSea.prototype.updateTexture = function (newtexture) {
+    this.texture = newtexture
+  }
+
   CubeSea.prototype.render = function (projectionMat, modelViewMat, stats, timestamp, position, orientation) {
     var gl = this.gl;
     var program = this.program;
