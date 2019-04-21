@@ -1,60 +1,15 @@
-<!doctype html>
-
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>WebcamJS Test Page</title>
-	<style type="text/css">
-		body { font-family: Helvetica, sans-serif; }
-		h2, h3 { margin-top:0; }
-		form { margin-top: 15px; }
-		form > input { margin-right: 15px; }
-		#results { float:right; margin:20px; padding:20px; border:1px solid; background:#ccc; }
-	</style>
 </head>
 <body>
-	<div id="results">Your captured image will appear here...</div>
-
-	<h1>WebcamJS Test Page</h1>
-	<h3>Demonstrates simple 320x240 capture &amp; display</h3>
-
-	<div id="my_camera"></div>
-
-	<!-- First, include the Webcam.js JavaScript Library -->
-  <script src="socket.io.js"></script>
-	<script type="text/javascript" src="js/webcam.min.js"></script>
-	<!-- <script type="text/javascript" src="https://raw.githubusercontent.com/jhuckaby/webcamjs/master/webcam.min.js"> -->
-
-	<!-- Configure a few settings and attach camera -->
-	<script language="JavaScript">
-		Webcam.set({
-			width: 1408,
-			height: 792,
-			image_format: 'jpeg',
-			jpeg_quality: 90
-		});
-		Webcam.attach( '#my_camera' );
-	</script>
-
-	<!-- A button for taking snaps -->
-	<form>
-		<input type=button value="Take Snapshot" onClick="take_snapshot()">
-	</form>
-
-	<!-- Code to handle taking the snapshot and displaying it locally -->
-	<script language="JavaScript">
-	const socket = io()
-
-	function take_snapshot() {
-		Webcam.snap( function(data_uri) {
-			document.getElementById('results').innerHTML =
-				'<h2>Here is your image:</h2>' +
-				'<img src="'+data_uri+'"/>';
-
-			socket.emit('pic_to_server', data_uri)
-		} );
-	}
-	</script>
-
+  <p>
+    <button onclick="startWebcam();">Start WebCam</button>
+    <button onclick="getCurrentFrame();">Take Snapshot</button>
+  </p>
+  <!-- <video id="video" hidden autoplay></video> -->
+  <!-- <canvas id="myCanvas" hidden></canvas> -->
+  <img id="my-data-uri" src="">
 </body>
+<script src="webcam.js"></script>
 </html>
